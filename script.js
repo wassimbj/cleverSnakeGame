@@ -1,36 +1,89 @@
 const gameBody = document.getElementById('gameBody')
-startPos = 0;
-endPos = 5;
-
-const gameState = {
-   status: 'aiming'
+gameStateSpan = document.getElementById('gameState')
+gameLevelSpan = document.getElementById('gameLevel')
+startPos = 0
+endPos = 5 // 6x6 grid as it starts from 0
+gameState = {
+   status: 'aiming',
+   level: 1
 }
+foodIcon = "🍎"
+obsatcleIcon = "🔥"
+eatIcon = "✅";
+let movePos = [0, 0]
 
-// build the game
-for (let i = 0; i < endPos + 1; i++) {
-   const tr = document.createElement('tr');
-   for (let j = 0; j < endPos + 1; j++) {
-      const aim = document.createElement('img');
-      aim.src = "./images/aim.svg"
-      aim.classList.add('absolute', 'aim', 'top-0', 'left-0', 'w-full', `${i == 0 && j == 0 ? 'opacity-100' : 'opacity-0'}`)
-
-      const food = document.createElement("span");
-      food.textContent = '🍎'
-      food.classList.add("food")
-
-      const td = document.createElement('td')
-      td.classList.add('p-5', 'relative', 'bg-gray-500')
-      td.append(food)
-      td.append(aim)
-      td.setAttribute("data-blocked", false)
-      td.setAttribute('data-pos', [i, j])
-      tr.append(td)
+// levels by level
+const levels = {
+   1: {
+      '[1,2]': true,
+      // [`[${endPos},0]`]: true
+   },
+   2: {
+      [`[${endPos},0]`]: true,
+      '[3,4]': true
+   },
+   3: {
+      '[1,2]': true,
+      [`[${endPos},0]`]: true,
+      '[3,4]': true
    }
-   gameBody.append(tr)
 }
 
+const isAnObstacle = (pos) => {
+   return levels[gameState.level][`[${pos}]`]
+}
 
-const movePos = [0, 0]
+const buildGame = () => {
+   for (let i = 0; i < endPos + 1; i++) {
+      const tr = document.createElement('tr');
+      for (let j = 0; j < endPos + 1; j++) {
+         const aim = document.createElement('img');
+         aim.src = "./images/aim.svg"
+         aim.classList.add('absolute', 'aim', 'top-0', 'left-0', 'w-full', `${i == 0 && j == 0 ? 'opacity-100' : 'opacity-0'}`)
+
+
+         const td = document.createElement('td')
+         td.classList.add('p-5', 'relative', 'bg-gray-500')
+
+         // food
+         const food = document.createElement("span");
+         // put some obsatcles
+         if (isAnObstacle([i, j])) {
+            food.textContent = obsatcleIcon
+            td.setAttribute("data-blocked", true)
+         } else {
+            food.textContent = foodIcon
+            td.setAttribute("data-blocked", false)
+            td.setAttribute("data-eaten", false)
+         }
+         food.classList.add("food")
+         td.append(food)
+
+         td.append(aim)
+         td.setAttribute('data-pos', [i, j])
+         tr.append(td)
+      }
+      gameBody.append(tr)
+   }
+}
+
+const resetGame = () => {
+   movePos = [0, 0]
+   gameState.status = "aiming"
+   gameBody.innerHTML = "";
+   gameStateSpan.textContent = "🎯 Press Space or Enter to start"
+   buildGame()
+}
+// init the game
+resetGame()
+
+
+const nextLevel = () => {
+   gameState.level = Math.min(gameState.level + 1, Object.keys(levels).length)
+   gameLevelSpan.textContent = `Level ${gameState.level}`
+   resetGame()
+}
+
 const toggleAimDisplay = (show) => {
    document.querySelector(`td[data-pos='${movePos}']`).querySelector("img").style.opacity = show ? 1 : 0
 }
@@ -39,16 +92,19 @@ const snakeFace = document.createElement("img");
 snakeFace.src = "./images/snake.png";
 snakeFace.classList.add('absolute', 'aim', 'top-0', 'left-0', 'w-full', 'snakeFace')
 
-// const moveThrought = (key, from, to) => {
+const didWin = () => {
+   // user wins when he eats all the food except the levels ofc
+   return document.querySelectorAll(".food[data-eaten='true']").length == Math.pow(endPos + 1, 2) - Object.keys(levels[gameState.level]).length;
+}
 
-// }
-
-const markAsBlocked = (key, from, to) => {
+const eatFood = (key, from, to) => {
    if (key === "ArrowRight") {
       // mark the TDs i moved throght as blocked
       for (let i = from[1]; i <= to[1]; i++) {
          let td = document.querySelector(`td[data-pos='${[from[0], i]}']`)
-         td.querySelector(".food").textContent = "✅";
+         let food = td.querySelector(".food")
+         food.textContent = eatIcon;
+         food.setAttribute("data-eaten", true)
          td.setAttribute("data-blocked", true)
       }
 
@@ -57,7 +113,9 @@ const markAsBlocked = (key, from, to) => {
       // mark the TDs i moved throght as blocked
       for (let i = from[1]; i >= to[1]; i--) {
          let td = document.querySelector(`td[data-pos='${[from[0], i]}']`)
-         td.querySelector(".food").textContent = "✅";
+         let food = td.querySelector(".food")
+         food.textContent = eatIcon;
+         food.setAttribute("data-eaten", true)
          td.setAttribute("data-blocked", true)
       }
       // move left
@@ -66,7 +124,9 @@ const markAsBlocked = (key, from, to) => {
       // mark the TDs i moved throght as blocked
       for (let i = from[0]; i >= to[0]; i--) {
          let td = document.querySelector(`td[data-pos='${[i, from[1]]}']`)
-         td.querySelector(".food").textContent = "✅";
+         let food = td.querySelector(".food")
+         food.textContent = eatIcon;
+         food.setAttribute("data-eaten", true)
          td.setAttribute("data-blocked", true)
       }
       // move up
@@ -75,17 +135,17 @@ const markAsBlocked = (key, from, to) => {
       // mark the TDs i moved throght as blocked
       for (let i = from[0]; i <= to[0]; i++) {
          let td = document.querySelector(`td[data-pos='${[i, from[1]]}']`)
-         td.querySelector(".food").textContent = "✅";
+         let food = td.querySelector(".food")
+         food.textContent = eatIcon;
+         food.setAttribute("data-eaten", true)
          td.setAttribute("data-blocked", true)
       }
       // move down
    }
 }
 
-const move = (dir) => {
+const moveSnake = (dir) => {
    if (dir === "ArrowRight") {
-      // let mvTo = endPos
-      // movePos[1] = endPos
       // move right until the first blocked
       for (let i = movePos[1] + 1; i < endPos + 1; i++) {
          movePos[1] = Math.min(endPos - 1, movePos[1])
@@ -97,9 +157,7 @@ const move = (dir) => {
          }
       }
    }
-
    if (dir === "ArrowLeft") {
-      // movePos[1] = 0
       // move left until the first blocked
       for (let i = movePos[1] - 1; i >= 0; i--) {
          movePos[1] = Math.max(0, movePos[1])
@@ -140,51 +198,71 @@ const move = (dir) => {
    }
 }
 
+const moveAim = (key) => {
+   toggleAimDisplay(false)
+   if (key === "ArrowRight") {
+      // move right
+      let mvTo = Math.min(movePos[1] + 1, endPos);
+      if (document.querySelector(`td[data-pos='${[movePos[0], mvTo]}']`).getAttribute("data-blocked") == "true") {
+         mvTo = movePos[1]
+      }
+      movePos[1] = mvTo
+   }
+   if (key === "ArrowLeft") {
+      // left
+      let mvTo = Math.max(movePos[1] - 1, 0);
+      if (document.querySelector(`td[data-pos='${[movePos[0], mvTo]}']`).getAttribute("data-blocked") == "true") {
+         mvTo = movePos[1]
+      }
+      movePos[1] = mvTo
+   }
+   if (key === "ArrowUp") {
+      // up
+      let mvTo = Math.max(movePos[0] - 1, 0);
+      if (document.querySelector(`td[data-pos='${[mvTo, movePos[1]]}']`).getAttribute("data-blocked") == "true") {
+         mvTo = movePos[0]
+      }
+      movePos[0] = mvTo
+   }
+   if (key === "ArrowDown") {
+      // down
+      let mvTo = Math.min(movePos[0] + 1, endPos);
+      if (document.querySelector(`td[data-pos='${[mvTo, movePos[1]]}']`).getAttribute("data-blocked") == "true") {
+         mvTo = movePos[0]
+      }
+      movePos[0] = mvTo
+   }
+   toggleAimDisplay(true)
+}
+
 document.addEventListener('keydown', function (event) {
    const key = event.code;
    // choosing the starting point
    if (gameState.status == "aiming") {
-      toggleAimDisplay(false)
-      if (key === "ArrowRight") {
-         // move right
-         movePos[1] = Math.min(movePos[1] + 1, endPos)
-      }
-      if (key === "ArrowLeft") {
-         // left
-         movePos[1] = Math.max(movePos[1] - 1, 0)
-      }
-      if (key === "ArrowUp") {
-         // up
-         movePos[0] = Math.max(movePos[0] - 1, 0)
-      }
-      if (key === "ArrowDown") {
-         // down
-         movePos[0] = Math.min(movePos[0] + 1, endPos)
-      }
-      toggleAimDisplay(true)
+      moveAim(key)
       if (key == "Space" || key == "Enter") {
          // select the starting point and update the game state to "playing"
-         // console.log(movePos)
-
          toggleAimDisplay(false)
          gameState.status = "playing"
+         gameStateSpan.textContent = "🐍 Now try to eat all the food, its tricky"
          document.querySelector(`td[data-pos='${movePos}']`).append(snakeFace);
       }
    } else {
       // we are playing steve
-      // remove the current one and show the next move
+      // remove the snake face from the current position
       const currentTd = document.querySelector(`td[data-pos='${movePos}']`)
       currentTd.querySelector(".snakeFace").remove()
 
-      const from = [...movePos]
-      move(key)
-      markAsBlocked(key, from, movePos)
-      // console.log(from, movePos)
-      /* right: [1, 2] [1, 5] */
-      /* left: [1, 5] [1, 0] */
-      /* up: [3, 2] [0, 2] */
-      /* bottom: [3, 2] [5, 2] */
+      const from = [...movePos] // copy of the prev move
+      moveSnake(key)
+      eatFood(key, from, movePos)
+
+      // show it on the news position
       document.querySelector(`td[data-pos='${movePos}']`).append(snakeFace);
+
+      if (didWin()) {
+         nextLevel()
+      }
    }
 
 
