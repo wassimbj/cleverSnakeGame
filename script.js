@@ -2,7 +2,7 @@ const gameBody = document.getElementById('gameBody')
 gameStateSpan = document.getElementById('gameState')
 gameLevelSpan = document.getElementById('gameLevel')
 startPos = 0
-endPos = 5 // 6x6 grid as it starts from 0
+endPos = 4 // 6x6 grid as it starts from 0
 gameState = {
    status: 'aiming',
    level: 1
@@ -15,17 +15,32 @@ let movePos = [0, 0]
 // levels by level
 const levels = {
    1: {
-      '[1,2]': true,
+      [`[${endPos - 1},0]`]: true,
+      [`[${endPos},0]`]: true,
+      [`[${endPos},${endPos}]`]: true,
       // [`[${endPos},0]`]: true
    },
    2: {
-      [`[${endPos},0]`]: true,
-      '[3,4]': true
+      [`[1,${endPos}]`]: true,
+      '[2,0]': true,
+      '[3,3]': true,
    },
    3: {
-      '[1,2]': true,
+      [`[0,${endPos}]`]: true,
+      [`[2,${endPos - 1}]`]: true,
       [`[${endPos},0]`]: true,
-      '[3,4]': true
+   },
+   4: {
+      [`[1,${endPos - 1}]`]: true,
+      [`[2,1]`]: true,
+      [`[3,${endPos}]`]: true,
+      [`[${endPos},0]`]: true,
+   },
+   5: {
+      [`[2,0]`]: true,
+      [`[3,1]`]: true,
+      [`[${endPos},${endPos - 1}]`]: true,
+      [`[${endPos},${endPos}]`]: true,
    }
 }
 
@@ -43,7 +58,7 @@ const buildGame = () => {
 
 
          const td = document.createElement('td')
-         td.classList.add('p-5', 'relative', 'bg-gray-500')
+         td.classList.add('p-6', 'relative', "text-lg", 'bg-gray-500')
 
          // food
          const food = document.createElement("span");
@@ -71,7 +86,8 @@ const resetGame = () => {
    movePos = [0, 0]
    gameState.status = "aiming"
    gameBody.innerHTML = "";
-   gameStateSpan.textContent = "🎯 Press Space or Enter to start"
+   gameLevelSpan.textContent = `Level ${gameState.level}`
+   gameStateSpan.textContent = "🎯 Move ⁘ & Press Space or Enter to start"
    buildGame()
 }
 // init the game
@@ -79,7 +95,7 @@ resetGame()
 
 
 const nextLevel = () => {
-   if(gameState.level + 1 > Object.keys(levels).length){
+   if (gameState.level + 1 > Object.keys(levels).length) {
       alert("We only have 3 levels for now, come back later for more levels");
       return;
    }
@@ -252,6 +268,9 @@ document.addEventListener('keydown', function (event) {
          document.querySelector(`td[data-pos='${movePos}']`).append(snakeFace);
       }
    } else {
+      if (key == "Escape") {
+         resetGame()
+      }
       // we are playing steve
       // remove the snake face from the current position
       const currentTd = document.querySelector(`td[data-pos='${movePos}']`)

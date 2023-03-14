@@ -23,11 +23,18 @@
 </head>
 
 <body class="bg-black text-gray-400 fixed top-0 left-0 w-full h-full">
-   <div class="block md:hidden mt-20 text-center">
+
+   <div class="block md:hidden mt-10 text-center">
       <span class="font-semibold block"> Its funnier & better on desktop </span>
    </div>
    <div class="md:block hidden">
-      <div class="max-w-lg text-center mx-auto mt-10">
+      <div class="text-center">
+         <a href="https://github.com/wassimbj/cleverSnakeGame"
+            class="p-1 inline-block text-gray-500 text-center hover:text-gray-300">
+            Github
+         </a>
+      </div>
+      <div class="max-w-lg text-center mx-auto mt-3">
          <span id="gameState" class="text-lg block">
             <!-- something will go here -->
          </span>
@@ -40,14 +47,11 @@
       </div>
 
 
-      <span onclick="resetGame()" class="bg-white/10 hover:bg-white/20 active:scale-90 text-sm cursor-pointer mx-auto w-20 text-center mt-5 block text-gray-300 px-3 py-2 rounded-lg"> Reset </span>
+      <span onclick="resetGame()"
+         class="bg-white/10 hover:bg-white/20 active:scale-90 text-sm cursor-pointer mx-auto w-20 text-center mt-5 block text-gray-300 px-3 py-2 rounded-lg">
+         Reset </span>
+      <span class="block text-center"> or <kbd>Esc</kbd> </span>
    </div>
-   <div class="text-center">
-      <a href="https://github.com/wassimbj/cleverSnakeGame"
-         class="mt-10 p-2 inline-block text-center hover:text-gray-300">
-         Github </a>
-   </div>
-
 </body>
 
 </html>
