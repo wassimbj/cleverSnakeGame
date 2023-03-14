@@ -79,6 +79,10 @@ resetGame()
 
 
 const nextLevel = () => {
+   if(gameState.level + 1 > Object.keys(levels).length){
+      alert("We only have 3 levels for now, come back later for more levels");
+      return;
+   }
    gameState.level = Math.min(gameState.level + 1, Object.keys(levels).length)
    gameLevelSpan.textContent = `Level ${gameState.level}`
    resetGame()
